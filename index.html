@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DateCalc Pro Elite</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        :root {
+            --bg-color: #e0e5ec;
+            --text-main: #2d4857;
+            --text-sub: #5d7c8d;
+            --accent-blue: #4f9bbf;
+            --dark-blue: #366982;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
+            --danger: #ff6b6b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .calculator {
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        /* DISPLAY SYSTEM */
+        .display {
+            flex: 1.2;
+            margin-bottom: 20px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* RIGA 1: Intera larghezza (65% altezza) */
+        .row-top {
+            height: 65%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 0 20px;
+        }
+
+        /* RIGA 2: Divisa 70/30 (35% altezza) */
+        .row-bottom {
+            height: 35%;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 70% 30%;
+        }
+
+        .field-data {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 10px;
+            overflow: hidden;
+        }
+
+        .field-op {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.02);
+            border-left: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* FONTS */
+        .display-text-top { 
+            font-size: 3.2rem; 
+            color: var(--text-main); 
+            font-weight: 800; 
+            letter-spacing: -1.5px;
+            text-align: center;
+        }
+
+        .display-text-bottom { 
+            font-size: 1.8rem; 
+            color: var(--text-sub); 
+            font-weight: 500; 
+        }
+
+        .operator-text { font-size: 2.2rem; color: var(--accent-blue); font-weight: 700; line-height: 1; }
+        .unit-indicator { font-size: 0.65rem; font-weight: 800; color: var(--dark-blue); text-transform: uppercase; margin-top: 2px; }
+
+        /* CONTROLS & KEYPAD */
+        .controls { display: flex; gap: 12px; margin-bottom: 15px; }
+        .control-btn {
+            background: var(--bg-color);
+            border-radius: 12px;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-main);
+            height: 55px;
+            flex: 1;
+        }
+        .btn-clear { flex: 0.6; background: var(--danger); color: white; }
+        .unit-selector { position: relative; }
+        .unit-selector select { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        .keypad { 
+            flex: 3.5; 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            grid-template-rows: repeat(5, 1fr);
+            gap: 12px; 
+        }
+        .btn {
+            background: var(--bg-color);
+            border-radius: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text-main);
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .btn-dark { background: var(--dark-blue); color: white; }
+        .btn-accent { background: var(--accent-blue); color: white; grid-column: span 3; font-size: 1.2rem; }
+        .btn-equal { background: linear-gradient(145deg, #4f9bbf, #366982); color: white; grid-row: span 2; }
+        .span-2 { grid-column: span 2; }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <div class="display">
+        <div class="row-top">
+            <span id="top-display" class="display-text-top"></span>
+        </div>
+        <div class="row-bottom">
+            <div class="field-data"><span id="bot-display" class="display-text-bottom"></span></div>
+            <div class="field-op">
+                <span id="op-display" class="operator-text"></span>
+                <span id="unit-display" class="unit-indicator"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="control-btn unit-selector">
+            <span id="unit-label">DAYS ▼</span>
+            <select id="unit-select">
+                <option value="days">DAYS</option>
+                <option value="weeks">WEEKS</option>
+                <option value="months">MONTHS</option>
+                <option value="years">YEARS</option>
+            </select>
+        </div>
+        <div class="control-btn format-toggle" onclick="toggleFormat()">
+            <span id="format-label">DD/MM/YYYY</span>
+        </div>
+        <div class="control-btn btn-clear" onclick="handleInput('C')">C</div>
+    </div>
+
+    <div class="keypad">
+        <div class="btn" onclick="handleInput('7')">7</div>
+        <div class="btn" onclick="handleInput('8')">8</div>
+        <div class="btn" onclick="handleInput('9')">9</div>
+        <div class="btn btn-dark" onclick="handleInput('back')">←</div>
+        <div class="btn" onclick="handleInput('4')">4</div>
+        <div class="btn" onclick="handleInput('5')">5</div>
+        <div class="btn" onclick="handleInput('6')">6</div>
+        <div class="btn btn-dark" onclick="handleInput('+')">+</div>
+        <div class="btn" onclick="handleInput('1')">1</div>
+        <div class="btn" onclick="handleInput('2')">2</div>
+        <div class="btn" onclick="handleInput('3')">3</div>
+        <div class="btn btn-dark" onclick="handleInput('-')">−</div>
+        <div class="btn span-2" onclick="handleInput('0')">0</div>
+        <div class="btn" onclick="handleInput('/')">/</div>
+        <div class="btn btn-equal" onclick="calculate()">=</div>
+        <div class="btn btn-accent" onclick="handleInput('today')">TODAY</div>
+    </div>
+</div>
+
+<script>
+    let currentFormat = 'EU'; 
+    let topVal = ""; let botVal = ""; let currentOp = ""; 
+    let isTypingBottom = false; let isResult = false;
+
+    const topDisp = document.getElementById('top-display');
+    const botDisp = document.getElementById('bot-display');
+    const opDisp = document.getElementById('op-display');
+    const unitDisp = document.getElementById('unit-display');
+    const unitSelect = document.getElementById('unit-select');
+
+    function parseDate(str) {
+        const p = str.split('/');
+        if (p.length !== 3) return new Date(NaN);
+        let d, m, y;
+        if (currentFormat === 'EU') { d = parseInt(p[0]); m = parseInt(p[1]) - 1; } 
+        else { m = parseInt(p[0]) - 1; d = parseInt(p[1]); }
+        y = parseInt(p[2]);
+        if (p[2].length === 2) y += 2000;
+        const testDate = new Date(y, m, d);
+        return (testDate.getFullYear() === y && testDate.getMonth() === m && testDate.getDate() === d) ? testDate : new Date(NaN);
+    }
+
+    function formatDate(date) {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return currentFormat === 'EU' ? `${d}/${m}/${y}` : `${m}/${d}/${y}`;
+    }
+
+    function toggleFormat() {
+        if (topVal.includes('/')) {
+            const d = parseDate(topVal);
+            currentFormat = (currentFormat === 'EU') ? 'US' : 'EU';
+            if (!isNaN(d.getTime())) topVal = formatDate(d);
+        } else currentFormat = (currentFormat === 'EU') ? 'US' : 'EU';
+        document.getElementById('format-label').innerText = currentFormat === 'EU' ? 'DD/MM/YYYY' : 'MM/DD/YYYY';
+        updateUI();
+    }
+
+    function updateUI() { 
+        topDisp.innerText = topVal; 
+        botDisp.innerText = botVal; 
+        opDisp.innerText = currentOp; 
+        const isNum = (botVal !== "" && !botVal.includes('/')) || (isResult && !topVal.includes('/'));
+        unitDisp.innerText = isNum ? unitSelect.value : "";
+    }
+
+    function handleInput(key) {
+        if (isResult && !['+','-','back','C'].includes(key)) { topVal=""; botVal=""; currentOp=""; isTypingBottom=false; isResult=false; }
+        if (key === 'C') { topVal=""; botVal=""; currentOp=""; isTypingBottom=false; isResult=false; }
+        else if (key === 'back') {
+            if (isTypingBottom) { botVal = botVal.slice(0,-1); if(!botVal){isTypingBottom=false; currentOp="";}}
+            else topVal = topVal.slice(0,-1);
+        }
+        else if (key === '+' || key === '-') { if(topVal!==""){ currentOp=key; botVal=""; isTypingBottom=true; isResult=false; }}
+        else if (key === 'today') { const t = formatDate(new Date()); if(isTypingBottom) botVal=t; else topVal=t; }
+        else { if(isTypingBottom) botVal += key; else topVal += key; }
+        updateUI();
+    }
+
+    function calculate() {
+        if (!topVal || !botVal) return;
+        const d1 = parseDate(topVal);
+        if (isNaN(d1.getTime())) { alert("Data non valida"); return; }
+        const unit = unitSelect.value;
+
+        if (botVal.includes('/')) {
+            const d2 = parseDate(botVal);
+            if (isNaN(d2.getTime())) { alert("Seconda data non valida"); return; }
+            let diff = (d1 - d2) / 86400000;
+            if (unit === 'weeks') diff /= 7; if (unit === 'months') diff /= 30.44; if (unit === 'years') diff /= 365.25;
+            topVal = Math.abs(diff).toFixed(2);
+        } else {
+            let num = parseFloat(botVal); if (isNaN(num)) return;
+            if (currentOp === '-') num = -num;
+            let res = new Date(d1);
+            if (unit === 'days') res.setDate(res.getDate() + num);
+            else if (unit === 'weeks') res.setDate(res.getDate() + num * 7);
+            else if (unit === 'months') res.setMonth(res.getMonth() + num);
+            else if (unit === 'years') res.setFullYear(res.getFullYear() + num);
+            topVal = formatDate(res);
+        }
+        botVal = ""; currentOp = ""; isTypingBottom = false; isResult = true;
+        updateUI();
+    }
+
+    unitSelect.addEventListener('change', (e) => {
+        document.getElementById('unit-label').innerText = e.target.value.toUpperCase() + " ▼";
+        updateUI();
+    });
+</script>
+</body>
+</html>
