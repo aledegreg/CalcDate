@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -7,17 +7,8 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
-
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-          .then(() => console.log("DateCalc: Pronto per l'uso offline"))
-          .catch((err) => console.log("Errore Service Worker:", err));
-      }
-    </script>
+    <link rel="manifest" href="manifest.json">
 
     <style>
         :root {
@@ -76,33 +67,24 @@
             overflow: hidden;
         }
 
-        /* RIGA 1: Intera larghezza (65% altezza) */
         .row-top {
-            height: 65%;
+            height: 62%;
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding: 0 20px;
+            padding: 0 15px;
         }
 
-        /* RIGA 2: Divisa 70/30 (35% altezza) */
         .row-bottom {
-            height: 35%;
+            height: 38%;
             width: 100%;
             display: grid;
             grid-template-columns: 70% 30%;
         }
 
-        .field-data {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0 10px;
-            overflow: hidden;
-        }
-
+        .field-data { display: flex; justify-content: center; align-items: center; padding: 0 10px; }
         .field-op {
             display: flex;
             flex-direction: column;
@@ -110,25 +92,13 @@
             align-items: center;
             background: rgba(0,0,0,0.02);
             border-left: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 4px;
         }
 
-        /* FONTS */
-        .display-text-top { 
-            font-size: 2.5rem; 
-            color: var(--text-main); 
-            font-weight: 800; 
-            letter-spacing: -1.5px;
-            text-align: center;
-        }
-
-        .display-text-bottom { 
-            font-size: 1.8rem; 
-            color: var(--text-sub); 
-            font-weight: 500; 
-        }
-
-        .operator-text { font-size: 2.2rem; color: var(--accent-blue); font-weight: 700; line-height: 1; }
-        .unit-indicator { font-size: 0.65rem; font-weight: 800; color: var(--dark-blue); text-transform: uppercase; margin-top: 2px; }
+        .display-text-top { font-size: 2.8rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.5px; }
+        .display-text-bottom { font-size: 2rem; color: var(--text-sub); font-weight: 500; }
+        .operator-text { font-size: 1.8rem; color: var(--accent-blue); font-weight: 700; line-height: 0.9; }
+        .unit-indicator { font-size: 0.6rem; font-weight: 800; color: var(--dark-blue); text-transform: uppercase; }
 
         /* CONTROLS & KEYPAD */
         .controls { display: flex; gap: 12px; margin-bottom: 15px; }
@@ -143,18 +113,12 @@
             color: var(--text-main);
             height: 55px;
             flex: 1;
+            padding: 0 5px;
         }
         .btn-clear { flex: 0.6; background: var(--danger); color: white; }
-        .unit-selector { position: relative; }
-        .unit-selector select { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .format-toggle { font-size: 0.75rem; text-align: center; }
 
-        .keypad { 
-            flex: 3.5; 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            grid-template-rows: repeat(5, 1fr);
-            gap: 12px; 
-        }
+        .keypad { flex: 3.5; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .btn {
             background: var(--bg-color);
             border-radius: 18px;
@@ -168,18 +132,61 @@
         }
         .btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
         .btn-dark { background: var(--dark-blue); color: white; }
-        .btn-accent { background: var(--accent-blue); color: white; grid-column: span 3; font-size: 1.2rem; }
+        .btn-accent { background: var(--accent-blue); color: white; }
         .btn-equal { background: linear-gradient(145deg, #4f9bbf, #366982); color: white; grid-row: span 2; }
         .span-2 { grid-column: span 2; }
+
+        /* EXTRA PAGE STYLES */
+        .extra-container {
+            position: fixed;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            transition: top 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+            z-index: 2000;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top, 40px);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .extra-container.open { top: 0; }
+        .extra-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .extra-header h2 { color: var(--text-main); font-size: 1.5rem; }
+        
+        .tool-card {
+            background: var(--bg-color);
+            padding: 18px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+        }
+        .tool-card h3 { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .tool-card input, .tool-card select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: var(--bg-color);
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            color: var(--text-main);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .res-box { text-align: right; font-weight: 800; color: var(--accent-blue); font-size: 1.3rem; margin-top: 5px; }
+        .dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .close-btn { width: 40px; height: 40px; background: var(--bg-color); border-radius: 50%; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--danger); }
     </style>
 </head>
 <body>
 
 <div class="calculator">
     <div class="display">
-        <div class="row-top">
-            <span id="top-display" class="display-text-top"></span>
-        </div>
+        <div class="row-top"><span id="top-display" class="display-text-top"></span></div>
         <div class="row-bottom">
             <div class="field-data"><span id="bot-display" class="display-text-bottom"></span></div>
             <div class="field-op">
@@ -190,18 +197,16 @@
     </div>
 
     <div class="controls">
-        <div class="control-btn unit-selector">
+        <div class="control-btn unit-selector" style="position:relative;">
             <span id="unit-label">DAYS ▼</span>
-            <select id="unit-select">
+            <select id="unit-select" style="position:absolute; opacity:0; width:100%; height:100%;">
                 <option value="days">DAYS</option>
                 <option value="weeks">WEEKS</option>
                 <option value="months">MONTHS</option>
                 <option value="years">YEARS</option>
             </select>
         </div>
-        <div class="control-btn format-toggle" onclick="toggleFormat()">
-            <span id="format-label">DD/MM/YYYY</span>
-        </div>
+        <div class="control-btn format-toggle" onclick="toggleFormat()"><span id="format-label">DD/MM/YYYY</span></div>
         <div class="control-btn btn-clear" onclick="handleInput('C')">C</div>
     </div>
 
@@ -221,11 +226,59 @@
         <div class="btn span-2" onclick="handleInput('0')">0</div>
         <div class="btn" onclick="handleInput('/')">/</div>
         <div class="btn btn-equal" onclick="calculate()">=</div>
-        <div class="btn btn-accent" onclick="handleInput('today')">TODAY</div>
+        <div class="btn span-2 btn-accent" onclick="handleInput('today')">TODAY</div>
+        <div class="btn btn-dark" onclick="openExtra()">EXTRA</div>
+    </div>
+</div>
+
+<div id="extra-page" class="extra-container">
+    <div class="extra-header">
+        <h2>Extra Tools</h2>
+        <div class="close-btn" onclick="closeExtra()">✕</div>
+    </div>
+
+    <div class="tool-card">
+        <h3>Ore Decimale ➞ HH:MM</h3>
+        <input type="number" id="dec-to-hm" placeholder="Esempio: 1.18" step="0.01">
+        <div class="res-box" id="res-dec-to-hm">0h 00m</div>
+    </div>
+
+    <div class="tool-card">
+        <h3>HH:MM ➞ Ore Decimale</h3>
+        <div class="dual-grid">
+            <input type="number" id="in-h" placeholder="Ore">
+            <input type="number" id="in-m" placeholder="Min">
+        </div>
+        <div class="res-box" id="res-hm-to-dec">0.00</div>
+    </div>
+
+    <div class="tool-card">
+        <h3>Diff. Oraria (con Data)</h3>
+        <div class="dual-grid">
+            <input type="datetime-local" id="dt1">
+            <input type="datetime-local" id="dt2">
+        </div>
+        <div class="res-box" id="res-diff-dt">00:00:00 (0.00)</div>
+    </div>
+
+    <div class="tool-card">
+        <h3>Differenza Percentuale</h3>
+        <div class="dual-grid">
+            <input type="number" id="perc-v1" placeholder="Val 1">
+            <input type="number" id="perc-v2" placeholder="Val 2">
+        </div>
+        <div class="res-box" id="res-perc">0%</div>
+    </div>
+
+    <div class="tool-card">
+        <h3>Julian Date (Excel Style)</h3>
+        <input type="date" id="jd-date">
+        <div class="res-box" id="res-jd">JD: -----</div>
     </div>
 </div>
 
 <script>
+    // --- LOGICA CALCOLATRICE PRINCIPALE ---
     let currentFormat = 'EU'; 
     let topVal = ""; let botVal = ""; let currentOp = ""; 
     let isTypingBottom = false; let isResult = false;
@@ -291,7 +344,6 @@
         const d1 = parseDate(topVal);
         if (isNaN(d1.getTime())) { alert("Data non valida"); return; }
         const unit = unitSelect.value;
-
         if (botVal.includes('/')) {
             const d2 = parseDate(botVal);
             if (isNaN(d2.getTime())) { alert("Seconda data non valida"); return; }
@@ -316,9 +368,68 @@
         document.getElementById('unit-label').innerText = e.target.value.toUpperCase() + " ▼";
         updateUI();
     });
+
+    // --- LOGICA PAGINA EXTRA ---
+    function openExtra() { document.getElementById('extra-page').classList.add('open'); }
+    function closeExtra() { document.getElementById('extra-page').classList.remove('open'); }
+
+    // 1. Decimale -> HH:MM
+    document.getElementById('dec-to-hm').addEventListener('input', (e) => {
+        let v = parseFloat(e.target.value);
+        if(isNaN(v)) return;
+        let h = Math.floor(v);
+        let m = Math.round((v - h) * 60);
+        document.getElementById('res-dec-to-hm').innerText = `${h}h ${String(m).padStart(2,'0')}m`;
+    });
+
+    // 2. HH:MM -> Decimale
+    function hmToDec() {
+        let h = parseFloat(document.getElementById('in-h').value) || 0;
+        let m = parseFloat(document.getElementById('in-m').value) || 0;
+        document.getElementById('res-hm-to-dec').innerText = (h + m/60).toFixed(2);
+    }
+    document.getElementById('in-h').addEventListener('input', hmToDec);
+    document.getElementById('in-m').addEventListener('input', hmToDec);
+
+    // 3. Diff DateTime
+    function diffDT() {
+        let dt1 = new Date(document.getElementById('dt1').value);
+        let dt2 = new Date(document.getElementById('dt2').value);
+        if (isNaN(dt1) || isNaN(dt2)) return;
+        let diffMs = Math.abs(dt2 - dt1);
+        let totHrs = diffMs / 3600000;
+        let h = Math.floor(totHrs);
+        let m = Math.floor((totHrs - h) * 60);
+        let s = Math.floor(((totHrs - h) * 60 - m) * 60);
+        document.getElementById('res-diff-dt').innerText = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} (${totHrs.toFixed(2)})`;
+    }
+    document.getElementById('dt1').addEventListener('input', diffDT);
+    document.getElementById('dt2').addEventListener('input', diffDT);
+
+    // 4. Percentuale
+    function calcPerc() {
+        let v1 = parseFloat(document.getElementById('perc-v1').value);
+        let v2 = parseFloat(document.getElementById('perc-v2').value);
+        if (isNaN(v1) || isNaN(v2) || v1 === 0) return;
+        let p = ((v2 - v1) / v1) * 100;
+        document.getElementById('res-perc').innerText = p.toFixed(2) + "%";
+    }
+    document.getElementById('perc-v1').addEventListener('input', calcPerc);
+    document.getElementById('perc-v2').addEventListener('input', calcPerc);
+
+    // 5. Julian Date (Excel/Lotus Style)
+    document.getElementById('jd-date').addEventListener('input', (e) => {
+        let d = new Date(e.target.value);
+        if (isNaN(d)) return;
+        let start = new Date("1899-12-30"); // Base corretta per Excel
+        let jd = Math.floor((d - start) / 86400000);
+        document.getElementById('res-jd').innerText = "JD: " + jd;
+    });
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
 </script>
 </body>
-
 </html>
-
-
