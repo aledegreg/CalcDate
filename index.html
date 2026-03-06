@@ -8,7 +8,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
 
     <style>
         :root {
@@ -119,17 +118,18 @@
         .tool-card {
             background: var(--bg-color); padding: 20px; border-radius: 20px; margin-bottom: 25px;
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            width: 100%;
         }
         .tool-card h3 { font-size: 0.95rem; color: var(--text-main); margin-bottom: 15px; font-weight: 700; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px;}
         
-        .input-wrapper { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .input-wrapper { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; width: 100%; }
         .input-wrapper label { font-size: 0.75rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .tool-card input {
-            width: 100%; padding: 14px; border: 2px solid transparent; border-radius: 12px;
-            background: var(--input-bg); color: var(--text-main); font-size: 1.1rem; font-weight: 600;
+            width: 100%; height: 50px; padding: 0 14px; border: 2px solid transparent; border-radius: 12px;
+            background: var(--input-bg); color: var(--text-main); font-size: 1rem; font-weight: 600;
             box-shadow: inset 4px 4px 8px #c8d0e0, inset -4px -4px 8px #ffffff;
-            transition: 0.2s; user-select: auto;
+            transition: 0.2s; -webkit-appearance: none; appearance: none;
         }
         .tool-card input:focus { outline: none; border-color: var(--accent-blue); background: #ffffff; }
 
@@ -140,6 +140,7 @@
         }
         
         .dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .date-stack { display: flex; flex-direction: column; gap: 5px; }
         .close-btn { width: 40px; height: 40px; background: var(--bg-color); border-radius: 50%; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--danger); cursor: pointer;}
     </style>
 </head>
@@ -205,8 +206,8 @@
     <div class="tool-card">
         <h3>Julian Date ➞ Data</h3>
         <div class="input-wrapper">
-            <label>Inserisci Julian Date (es: 24199)</label>
-            <input type="number" id="in-jd" placeholder="Formato YYDDD">
+            <label>Formato YYDDD (es: 24199)</label>
+            <input type="number" id="in-jd" placeholder="Inserisci numero">
         </div>
         <div class="res-box" id="res-jd-to-date">--/--/----</div>
     </div>
@@ -214,7 +215,7 @@
     <div class="tool-card">
         <h3>Data ➞ Julian Date</h3>
         <div class="input-wrapper">
-            <label>Data di riferimento</label>
+            <label>Seleziona Data</label>
             <input type="date" id="jd-date">
         </div>
         <div class="res-box" id="res-jd">JD: -----</div>
@@ -246,13 +247,13 @@
 
     <div class="tool-card">
         <h3>Differenza Oraria</h3>
-        <div class="dual-grid">
+        <div class="date-stack">
             <div class="input-wrapper">
-                <label>Data/Ora Inizio</label>
+                <label>Inizio</label>
                 <input type="datetime-local" id="dt1">
             </div>
             <div class="input-wrapper">
-                <label>Data/Ora Fine</label>
+                <label>Fine</label>
                 <input type="datetime-local" id="dt2">
             </div>
         </div>
@@ -261,7 +262,6 @@
 </div>
 
 <script>
-    // --- LOGICA CALCOLATRICE PRINCIPALE ---
     let currentFormat = 'EU'; 
     let topVal = ""; let botVal = ""; let currentOp = ""; 
     let isTypingBottom = false; let isResult = false;
@@ -352,25 +352,20 @@
         updateUI();
     });
 
-    // --- LOGICA PAGINA EXTRA ---
     function openExtra() { document.getElementById('extra-page').classList.add('open'); }
     function closeExtra() { document.getElementById('extra-page').classList.remove('open'); }
 
-    // YYDDD ➞ Data
+    // Julian YYDDD to Date
     document.getElementById('in-jd').addEventListener('input', (e) => {
         let val = e.target.value.trim();
-        if(val.length !== 5 || isNaN(val)) { 
-            document.getElementById('res-jd-to-date').innerText = "--/--/----"; 
-            return; 
-        }
+        if(val.length !== 5 || isNaN(val)) { document.getElementById('res-jd-to-date').innerText = "--/--/----"; return; }
         let yy = parseInt(val.substring(0, 2));
         let ddd = parseInt(val.substring(2, 5));
-        let year = 2000 + yy; // Assumiamo anni 2000+
-        let d = new Date(year, 0, ddd); // Javascript gestisce automaticamente i giorni > 31
+        let d = new Date(2000 + yy, 0, ddd);
         document.getElementById('res-jd-to-date').innerText = formatDate(d);
     });
 
-    // Data ➞ YYDDD
+    // Date to Julian YYDDD
     document.getElementById('jd-date').addEventListener('input', (e) => {
         let d = new Date(e.target.value);
         if (isNaN(d)) { document.getElementById('res-jd').innerText = "JD: -----"; return; }
@@ -383,7 +378,7 @@
     });
 
     document.getElementById('dec-to-hm').addEventListener('input', (e) => {
-        let v = parseFloat(e.target.value.replace(',', '.'));
+        let v = parseFloat(e.target.value);
         if(isNaN(v)) return;
         let h = Math.floor(v);
         let m = Math.round((v - h) * 60);
